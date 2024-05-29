@@ -61,6 +61,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
 
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.compose.material:material-android:1.6.7")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

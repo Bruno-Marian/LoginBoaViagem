@@ -17,6 +17,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -29,26 +30,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.senac.boasviagens.R
+import com.senac.boasviagens.viewmodels.DadosViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun Login(onCadastrarUsuario: ()->Unit, onLogin: () ->Unit){
-
-    val visibi = remember {
-        mutableStateOf(false)
-    }
+fun Login(onCadastrarUsuario: ()->Unit, onLogin: () ->Unit,  dadosViewModel: DadosViewModel = viewModel()){
 
     val snackbarHostState = remember {
         SnackbarHostState()
-    }
-
-    val login = remember {
-        mutableStateOf("")
-    }
-
-    val pass = remember {
-        mutableStateOf("")
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -67,6 +58,11 @@ fun Login(onCadastrarUsuario: ()->Unit, onLogin: () ->Unit){
                 .padding(it)
 
         ) {
+
+            val loginState = dadosViewModel.uiState.collectAsState()
+            val passState = dadosViewModel.uiState.collectAsState()
+            val visivelState = dadosViewModel.uiState.collectAsState()
+
             Image(
                 painter = painterResource(id = R.drawable.viagem),
                 contentDescription = "Cabana",
@@ -84,8 +80,8 @@ fun Login(onCadastrarUsuario: ()->Unit, onLogin: () ->Unit){
             )
 
             OutlinedTextField(
-                value = login.value,
-                onValueChange = { login.value = it },
+                value = loginState.value.login,
+                onValueChange = { dadosViewModel.updateLogin(it) },
                 label = {
                     Text(text = "login")
                 },
@@ -103,25 +99,25 @@ fun Login(onCadastrarUsuario: ()->Unit, onLogin: () ->Unit){
             )
 
             OutlinedTextField(
-                value = pass.value,
-                onValueChange = { pass.value = it },
+                value = passState.value.senha,
+                onValueChange = { dadosViewModel.updateSenha(it) },
                 label = {
-                    Text(text = "password")
+                    Text(text = "Password")
                 },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password
                 ),
                 visualTransformation =
-                if (visibi.value)
+                if (visivelState.value.visivel)
                     VisualTransformation.None
                 else
                     PasswordVisualTransformation(),
 
                 trailingIcon = {
                     IconButton(onClick = {
-                        visibi.value = !visibi.value
+                        dadosViewModel.updadeVisivel(!visivelState.value.visivel)
                     }) {
-                        if (visibi.value)
+                        if (visivelState.value.visivel)
                             Icon(
                                 painterResource(id = R.drawable.visiblee), ""
                             )
@@ -138,13 +134,13 @@ fun Login(onCadastrarUsuario: ()->Unit, onLogin: () ->Unit){
 
             Button(
                 onClick = {
-                    if (pass.value == "admin" && login.value == "admin")
+                    if (passState.value.senha == "admin" && loginState.value.login == "admin")
                         onLogin()
                     else {
                         coroutineScope.launch {
                             focus.clearFocus()
                             snackbarHostState.showSnackbar(
-                                message = "Login e/ou senha incorretos!",
+                                message = "Login e/ou senha errados!!",
                                 withDismissAction = true
                             )
                         }
