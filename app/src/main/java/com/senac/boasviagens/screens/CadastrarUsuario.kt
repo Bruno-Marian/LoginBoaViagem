@@ -28,9 +28,6 @@ fun CadastrarUsuario(
         onBack: () -> Unit,
         dadosViewModel: DadosViewModel = viewModel()
 ) {
-
-
-
     Column(
         modifier = Modifier
             .fillMaxSize()
