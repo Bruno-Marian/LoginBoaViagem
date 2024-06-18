@@ -1,5 +1,6 @@
 package com.senac.boasviagens.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,18 +15,26 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.senac.boasviagens.components.MyTopBar
+import com.senac.boasviagens.database.AppDatabase
+import com.senac.boasviagens.entities.TipoViagem
+import com.senac.boasviagens.entities.Viagem
+import com.senac.boasviagens.viewmodels.ViagemViewModel
+import com.senac.boasviagens.viewmodels.ViagemViewModelFatory
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -38,7 +47,13 @@ fun CadastrarViagens(onBack: ()->Unit) {
         topBar = {
             MyTopBar()
         }
-    ) {
+    ) { it ->
+        val context = LocalContext.current
+        val db = AppDatabase.getDatabase(context)
+        val viagemViewModel: ViagemViewModel = viewModel(
+            factory = ViagemViewModelFatory(db)
+        )
+        val state = viagemViewModel.uiState.collectAsState()
 
         var showDatePickerDialogInicio = remember {
             mutableStateOf(false)
@@ -77,8 +92,8 @@ fun CadastrarViagens(onBack: ()->Unit) {
 
             Row {
                 OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
+                    value = state.value.destino,
+                    onValueChange = { viagemViewModel.updateDestino(it) },
                     modifier = Modifier
                         .weight(4f)
                         .padding(top = 10.dp)
@@ -100,8 +115,8 @@ fun CadastrarViagens(onBack: ()->Unit) {
             ) {
 
                 RadioButton(
-                    selected = false,
-                    onClick = {},
+                    selected = state.value.tipo == TipoViagem.Lazer,
+                    onClick = { viagemViewModel.updateTipo(TipoViagem.Lazer) },
                     modifier = Modifier
                         .weight(0.5f)
                 )
@@ -115,8 +130,8 @@ fun CadastrarViagens(onBack: ()->Unit) {
                 )
 
                 RadioButton(
-                    selected = true,
-                    onClick = {},
+                    selected = state.value.tipo != TipoViagem.Negocio,
+                    onClick = { viagemViewModel.updateTipo(TipoViagem.Negocio)},
                     modifier = Modifier
                         .weight(0.5f)
                 )
@@ -168,8 +183,8 @@ fun CadastrarViagens(onBack: ()->Unit) {
                 }
 
                 OutlinedTextField(
-                    value = selectedDateInicio.value,
-                    onValueChange = { },
+                    value = state.value.inicio.toString(),
+                    onValueChange = { viagemViewModel.updateInicio(it.toLong()) },
                     modifier = Modifier
                         .padding(8.dp)
                         .fillMaxWidth()
@@ -220,8 +235,8 @@ fun CadastrarViagens(onBack: ()->Unit) {
                 }
 
                 OutlinedTextField(
-                    value = selectedDateFinal.value,
-                    onValueChange = { },
+                    value = state.value.fim.toString(),
+                    onValueChange = { viagemViewModel.updateFim(it.toLong()) },
                     modifier = Modifier
                         .padding(8.dp)
                         .fillMaxWidth()
@@ -249,8 +264,8 @@ fun CadastrarViagens(onBack: ()->Unit) {
 
             Row {
                 OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
+                    value = state.value.orcamento.toString(),
+                    onValueChange = { viagemViewModel.updateOrcamento(it.toFloat()) },
                     modifier = Modifier
                         .weight(4f)
                         .padding(top = 10.dp)
@@ -261,7 +276,10 @@ fun CadastrarViagens(onBack: ()->Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ){
                 Button(
-                    onClick = { onBack() },
+                    onClick = {
+                        viagemViewModel.save()
+                        Toast.makeText(context, "Viagem salva!", Toast.LENGTH_SHORT).show()
+                        onBack() },
                     modifier = Modifier
                         .padding(top = 35.dp)
                         .weight(2f)
