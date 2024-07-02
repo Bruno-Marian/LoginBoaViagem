@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.CalendarLocale
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -16,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -25,10 +28,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.senac.boasviagens.components.MyTopBar
 import com.senac.boasviagens.database.AppDatabase
 import com.senac.boasviagens.entities.TipoViagem
@@ -42,7 +43,7 @@ import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CadastrarViagens(onBack: ()->Unit) {
+fun CadastrarViagens(onBack: ()->Unit, savedStateHandle: SavedStateHandle) {
     Scaffold(
         topBar = {
             MyTopBar()
@@ -53,25 +54,17 @@ fun CadastrarViagens(onBack: ()->Unit) {
         val viagemViewModel: ViagemViewModel = viewModel(
             factory = ViagemViewModelFatory(db)
         )
+
+        val userId: String = checkNotNull(savedStateHandle["userId"])
+        
+
         val state = viagemViewModel.uiState.collectAsState()
 
-        var showDatePickerDialogInicio = remember {
-            mutableStateOf(false)
-        }
-        var selectedDateInicio = remember {
-            mutableStateOf("")
-        }
+        val showDatePickerDialogInicio = remember { mutableStateOf(false) }
+        val datePickerStateInicio = remember { mutableStateOf(DatePickerState(CalendarLocale("PT-BR"))) }
 
-        val datePickerStateInicio = rememberDatePickerState()
-
-        var showDatePickerDialogFinal = remember {
-            mutableStateOf(false)
-        }
-        var selectedDateFinal = remember {
-            mutableStateOf("")
-        }
-
-        val datePickerStateFinal = rememberDatePickerState()
+        val showDatePickerDialogFinal = remember { mutableStateOf(false) }
+        val datePickerStateFinal = remember { mutableStateOf(DatePickerState(CalendarLocale("PT-BR"))) }
 
         Column(
             modifier = Modifier
@@ -130,7 +123,7 @@ fun CadastrarViagens(onBack: ()->Unit) {
                 )
 
                 RadioButton(
-                    selected = state.value.tipo != TipoViagem.Negocio,
+                    selected = state.value.tipo == TipoViagem.Negocio,
                     onClick = { viagemViewModel.updateTipo(TipoViagem.Negocio)},
                     modifier = Modifier
                         .weight(0.5f)
@@ -166,10 +159,9 @@ fun CadastrarViagens(onBack: ()->Unit) {
                         confirmButton = {
                             Button(
                                 onClick = {
-                                    datePickerStateInicio
-                                        .selectedDateMillis?.let { millis ->
-                                            selectedDateInicio.value = millis.toBrazilianDateFormat()
-                                        }
+                                    datePickerStateInicio.value.selectedDateMillis?.let { millis ->
+                                        viagemViewModel.updateInicio(Date(millis))
+                                    }
                                     showDatePickerDialogInicio.value = false
                                 }) {
                                 Text(text = "Escolher data")
@@ -178,13 +170,13 @@ fun CadastrarViagens(onBack: ()->Unit) {
                         modifier = Modifier
                             .weight(4f)
                     ) {
-                        DatePicker(state = datePickerStateInicio)
+                        DatePicker(state = datePickerStateInicio.value)
                     }
                 }
 
                 OutlinedTextField(
-                    value = state.value.inicio.toString(),
-                    onValueChange = { viagemViewModel.updateInicio(it.toLong()) },
+                    value = state.value.inicio?.time?.toBrazilianDateFormat() ?: "",
+                    onValueChange = { /* Não precisamos atualizar aqui, pois o DatePicker faz isso */ },
                     modifier = Modifier
                         .padding(8.dp)
                         .fillMaxWidth()
@@ -218,10 +210,9 @@ fun CadastrarViagens(onBack: ()->Unit) {
                         confirmButton = {
                             Button(
                                 onClick = {
-                                    datePickerStateFinal
-                                        .selectedDateMillis?.let { millis ->
-                                            selectedDateFinal.value = millis.toBrazilianDateFormat()
-                                        }
+                                    datePickerStateFinal.value.selectedDateMillis?.let { millis ->
+                                        viagemViewModel.updateFim(Date(millis))
+                                    }
                                     showDatePickerDialogFinal.value = false
                                 }) {
                                 Text(text = "Escolher data")
@@ -230,13 +221,13 @@ fun CadastrarViagens(onBack: ()->Unit) {
                         modifier = Modifier
                             .weight(4f)
                     ) {
-                        DatePicker(state = datePickerStateFinal)
+                        DatePicker(state = datePickerStateFinal.value)
                     }
                 }
 
                 OutlinedTextField(
-                    value = state.value.fim.toString(),
-                    onValueChange = { viagemViewModel.updateFim(it.toLong()) },
+                    value = state.value.fim?.time?.toBrazilianDateFormat() ?: "",
+                    onValueChange = { /* Não precisamos atualizar aqui, pois o DatePicker faz isso */ },
                     modifier = Modifier
                         .padding(8.dp)
                         .fillMaxWidth()
@@ -264,7 +255,7 @@ fun CadastrarViagens(onBack: ()->Unit) {
 
             Row {
                 OutlinedTextField(
-                    value = state.value.orcamento.toString(),
+                    value = state.value.orcamento?.toString() ?: "",
                     onValueChange = { viagemViewModel.updateOrcamento(it.toFloat()) },
                     modifier = Modifier
                         .weight(4f)

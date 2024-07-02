@@ -7,11 +7,14 @@ import com.senac.boasviagens.dao.ViagemDao
 import com.senac.boasviagens.database.AppDatabase
 import com.senac.boasviagens.entities.TipoViagem
 import com.senac.boasviagens.entities.Viagem
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Date
 
 class ViagemViewModelFatory(val db: AppDatabase) : ViewModelProvider.Factory{
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -34,19 +37,19 @@ class ViagemViewModel(val viagemDao: ViagemDao): ViewModel() {
         }
     }
 
-    fun updateInicio(inicio: Long){
+    fun updateInicio(inicio: Date?){
         _uiState.update {
             it.copy(inicio = inicio)
         }
     }
 
-    fun updateFim(fim: Long){
+    fun updateFim(fim: Date?){
         _uiState.update {
             it.copy(fim = fim)
         }
     }
 
-    fun updateOrcamento(orcamento: Float){
+    fun updateOrcamento(orcamento: Float?){
         _uiState.update {
             it.copy(orcamento = orcamento)
         }
@@ -66,4 +69,18 @@ class ViagemViewModel(val viagemDao: ViagemDao): ViewModel() {
             }
         }
     }
+
+    fun delete(viagem: Viagem){
+        viewModelScope.launch {
+            viagemDao.delete(viagem)
+        }
+    }
+
+    suspend fun findById(id: Long): Viagem? {
+        val deferred : Deferred<Viagem?> = viewModelScope.async {
+            viagemDao.findById(id)
+        }
+        return deferred.await()
+    }
+
 }

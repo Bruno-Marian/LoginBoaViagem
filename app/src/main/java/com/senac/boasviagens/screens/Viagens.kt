@@ -1,6 +1,5 @@
 package com.senac.boasviagens.screens
 
-import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -24,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,34 +31,31 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.senac.boasviagens.R
-import com.senac.boasviagens.models.TipoViagem
-import com.senac.boasviagens.models.Viagem
-import java.time.LocalDate
-
+import com.senac.boasviagens.database.AppDatabase
+import com.senac.boasviagens.entities.Viagem
+import com.senac.boasviagens.entities.TipoViagem
+import com.senac.boasviagens.viewmodels.ViagemViewModel
+import com.senac.boasviagens.viewmodels.ViagemViewModelFatory
 fun Dest(){
 
 }
 @Composable
 fun Viagens(){
-    val list = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        listOf(
-            Viagem(1, "África", TipoViagem.Lazer, LocalDate.of(2024, 1, 3), LocalDate.of(2024, 2, 3), 2000f),
-            Viagem(1, "EUA", TipoViagem.Negocio, LocalDate.of(2024, 3, 14), LocalDate.of(2024, 6, 10), 3500f),
-            Viagem(1, "Canada", TipoViagem.Negocio, LocalDate.of(2024, 11, 8), LocalDate.of(2024, 12, 14), 1500f),
-            Viagem(1, "França", TipoViagem.Lazer, LocalDate.of(2025, 2, 23), LocalDate.of(2025, 9, 5), 14560f),
-        )
-    } else {
-        TODO("VERSION.SDK_INT < O")
-    }
+    val context = LocalContext.current
+    val db = AppDatabase.getDatabase(context)
+    val viagemViewModel: ViagemViewModel = viewModel(
+        factory = ViagemViewModelFatory(db)
+    )
+    val listViagem = viagemViewModel.viagemDao.getAll().collectAsState(initial = emptyList())
 
     val navController = rememberNavController()
     Scaffold(
@@ -70,13 +67,14 @@ fun Viagens(){
                     contentDescription = null)
             }
         }
-    ) {
+    ) { it ->
         Column(modifier = Modifier.padding(it)) {
             NavHost(
                 navController = navController,
                 startDestination = "dest"
             ) {
-                composable("cadastroViagens") {
+                composable("cadastroViagens/{viagemId}",
+                    arguments = listOf(navArgument("viagemId") { type = NavType.LongType })) {
                     CadastrarViagens(
                         onBack = {navController.navigateUp()}
                     )
@@ -86,8 +84,10 @@ fun Viagens(){
                 }
             }
             LazyColumn {
-                items(items = list){
-                    ViagemCard(it)
+                items(items = listViagem.value){
+                    ViagemCard(it, onDelete = {
+                        viagemViewModel.delete(it)
+                    })
                 }
             }
         }
@@ -96,7 +96,7 @@ fun Viagens(){
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ViagemCard(v: Viagem){
+fun ViagemCard(v: Viagem, onDelete: () -> Unit){
     val ctx = LocalContext.current
     Card(elevation = CardDefaults.cardElevation(
         defaultElevation = 6.dp
@@ -110,19 +110,13 @@ fun ViagemCard(v: Viagem){
                     Toast
                         .makeText(
                             ctx,
-                            "Destino: ${v.destino}",
-                            Toast.LENGTH_SHORT
-                        )
-                        .show()
-                },
-                onLongClick = {
-                    Toast
-                        .makeText(
-                            ctx,
                             "Destino: ${v.destino}, ${v.inicio} - ${v.fim}",
                             Toast.LENGTH_LONG
                         )
                         .show()
+                },
+                onLongClick = {
+                    onDelete()
                 }
             )
     ) {
@@ -156,7 +150,7 @@ fun ViagemCard(v: Viagem){
             Column {
                 Text(text = "Destino: ${v.destino}", fontSize = 25.sp, style = MaterialTheme.typography.titleLarge)
                 Row{
-                    Text(text = "${v.inicio} - ${v.fim}")
+                    Text(text = "${v.inicio?.time?.toBrazilianDateFormat()} - ${v.fim?.time?.toBrazilianDateFormat()}")
                 }
                 Row{
                     Text(text = "Orçamento: R$ ${v.orcamento}")

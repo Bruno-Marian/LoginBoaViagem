@@ -8,7 +8,6 @@ import androidx.room.Update
 import androidx.room.Upsert
 import com.senac.boasviagens.entities.Viagem
 import kotlinx.coroutines.flow.Flow
-import org.intellij.lang.annotations.JdkConstants.ListSelectionMode
 
 @Dao
 interface ViagemDao {
@@ -22,11 +21,11 @@ interface ViagemDao {
     suspend fun upsert(viagem: Viagem) : Long
 
     @Delete
-    fun delete(viagem: Viagem)
+    suspend fun delete(viagem: Viagem)
 
     @Query("SELECT * FROM Viagem ORDER BY id DESC")
     fun getAll() : Flow<List<Viagem>>
 
     @Query("SELECT * FROM Viagem V WHERE V.id = :id")
-    fun findById(id: Long) : Viagem?
+    suspend fun findById(id: Long) : Viagem?
 }

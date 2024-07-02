@@ -5,10 +5,14 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverter
+import androidx.room.TypeConverters
 import com.senac.boasviagens.dao.ViagemDao
+import com.senac.boasviagens.entities.Converters
 import com.senac.boasviagens.entities.Viagem
 
 @Database(entities = [Viagem::class], version = 1, exportSchema = false)
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract val viagemDao: ViagemDao
@@ -21,8 +25,10 @@ abstract class AppDatabase : RoomDatabase() {
             val instance = Room.databaseBuilder(
                 context,
                 AppDatabase::class.java,
-                "viagem-db"
-            ).build()
+                "appviagem-db"
+            )
+                .fallbackToDestructiveMigration()
+                .build()
             INSTANCE = instance
             instance
         }

@@ -2,6 +2,8 @@ package com.senac.boasviagens.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverter
+import java.util.Date
 
 enum class TipoViagem(){
  Lazer,
@@ -13,8 +15,30 @@ data class Viagem(
  @PrimaryKey(autoGenerate = true) val id: Long = 0,
  val destino: String = "",
  val tipo: TipoViagem = TipoViagem.Lazer,
- val inicio: Long = 0,
- val fim: Long = 0,
- val orcamento: Float = 0.00f
+ val inicio: Date? = null,
+ val fim: Date? = null,
+ val orcamento: Float? = null
 ) {
+}
+
+class Converters {
+ @TypeConverter
+ fun fromTipoViagem(tipo: TipoViagem): String {
+  return tipo.name
+ }
+
+ @TypeConverter
+ fun toTipoViagem(value: String): TipoViagem {
+  return TipoViagem.valueOf(value)
+ }
+
+ @TypeConverter
+ fun fromDate(date: Date?): Long? {
+  return date?.time
+ }
+
+ @TypeConverter
+ fun toDate(value: Long?): Date? {
+  return value?.let { Date(it) }
+ }
 }
