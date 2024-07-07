@@ -21,23 +21,27 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.senac.boasviagens.R
-import com.senac.boasviagens.viewmodels.DadosViewModel
+import com.senac.boasviagens.database.AppDatabase
+import com.senac.boasviagens.viewmodels.UsuarioViewModel
+import com.senac.boasviagens.viewmodels.UsuarioViewModelFatory
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
 @Composable
-fun Login(onCadastrarUsuario: ()->Unit, onLogin: () ->Unit,  dadosViewModel: DadosViewModel = viewModel()){
+fun Login(onCadastrarUsuario: ()->Unit, onLogin: (id: String) ->Unit){
 
     val snackbarHostState = remember {
         SnackbarHostState()
@@ -52,17 +56,21 @@ fun Login(onCadastrarUsuario: ()->Unit, onLogin: () ->Unit,  dadosViewModel: Dad
         snackbarHost = {
             SnackbarHost(snackbarHostState)
         }
-    ) {
+    ) { it ->
         Column(
             modifier = Modifier
                 .padding(10.dp)
                 .padding(it)
 
         ) {
+            val context = LocalContext.current
+            val db = AppDatabase.getDatabase(context)
+            val usuarioViewModel: UsuarioViewModel = viewModel(
+                factory = UsuarioViewModelFatory(db)
+            )
 
-            val loginState = dadosViewModel.uiState.collectAsState()
-            val passState = dadosViewModel.uiState.collectAsState()
-            val visivelState = dadosViewModel.uiState.collectAsState()
+            val loginState = usuarioViewModel.uiState.collectAsState()
+            val passState = usuarioViewModel.uiState.collectAsState()
 
             Image(
                 painter = painterResource(id = R.drawable.viagem),
@@ -81,8 +89,8 @@ fun Login(onCadastrarUsuario: ()->Unit, onLogin: () ->Unit,  dadosViewModel: Dad
             )
 
             OutlinedTextField(
-                value = loginState.value.login,
-                onValueChange = { dadosViewModel.updateLogin(it) },
+                value = loginState.value.usuario,
+                onValueChange = { usuarioViewModel.updateLogin(it) },
                 label = {
                     Text(text = "login")
                 },
@@ -99,9 +107,11 @@ fun Login(onCadastrarUsuario: ()->Unit, onLogin: () ->Unit,  dadosViewModel: Dad
 
             )
 
+            val visible = remember { mutableStateOf(true) }
+
             OutlinedTextField(
                 value = passState.value.senha,
-                onValueChange = { dadosViewModel.updateSenha(it) },
+                onValueChange = { usuarioViewModel.updateSenha(it) },
                 label = {
                     Text(text = "Password")
                 },
@@ -109,16 +119,16 @@ fun Login(onCadastrarUsuario: ()->Unit, onLogin: () ->Unit,  dadosViewModel: Dad
                     keyboardType = KeyboardType.Password
                 ),
                 visualTransformation =
-                if (visivelState.value.visivel)
+                if (visible.value)
                     VisualTransformation.None
                 else
                     PasswordVisualTransformation(),
 
                 trailingIcon = {
                     IconButton(onClick = {
-                        dadosViewModel.updadeVisivel(!visivelState.value.visivel)
+                        visible.value = (!visible.value)
                     }) {
-                        if (visivelState.value.visivel)
+                        if (visible.value)
                             Icon(
                                 painterResource(id = R.drawable.visiblee), ""
                             )
@@ -135,21 +145,28 @@ fun Login(onCadastrarUsuario: ()->Unit, onLogin: () ->Unit,  dadosViewModel: Dad
 
             Button(
                 onClick = {
-                    if (passState.value.senha == "admin" && loginState.value.login == "admin")
-                        onLogin()
-                    else {
-                        coroutineScope.launch {
-                            focus.clearFocus()
-                            snackbarHostState.showSnackbar(
-                                message = "Login e/ou senha errados!!",
-                                withDismissAction = true
-                            )
+                    MainScope().launch {
+                        val pass = usuarioViewModel.findByLogin(
+                            usuarioViewModel.uiState.value.usuario,
+                            usuarioViewModel.uiState.value.senha
+                        )
+
+                        if (pass != null) {
+                            onLogin(pass.toString())
+                        } else {
+                            coroutineScope.launch {
+                                focus.clearFocus()
+                                snackbarHostState.showSnackbar(
+                                    message = "Usuário ou Senha incorretos!",
+                                    withDismissAction = true
+                                )
+                            }
                         }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 15.dp)
+                    .padding(top = 10.dp)
             ) {
                 Text(
                     text = "Login",

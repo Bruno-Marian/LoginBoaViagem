@@ -45,7 +45,7 @@ import java.util.TimeZone
 fun CadastrarViagens(onBack: ()->Unit, viagemId: Long?) {
     Scaffold(
         topBar = {
-            MyTopBar { onBack() }
+            MyTopBar("Nova viagem") { onBack() }
         }
     ) { it ->
         val context = LocalContext.current

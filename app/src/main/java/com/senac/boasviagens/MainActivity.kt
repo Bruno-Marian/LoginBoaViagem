@@ -9,7 +9,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -52,7 +51,7 @@ fun MyApp(){
                         navController.navigate("CadastrarUsuario")
                     },
                         onLogin = {
-                            navController.navigate("menu")
+                            navController.navigate("menu/${it}")
                         })
                 }
 
@@ -60,11 +59,13 @@ fun MyApp(){
                     CadastrarUsuario(onBack = {navController.navigateUp()})
                 }
 
-                composable("menu"){
-                    Menu(onBack = {
-                        navController.navigateUp()
-                    })
+                composable("menu/{id}"){
+                    backStackEntry -> backStackEntry.arguments?.getString("id")?.let {
+                    Menu(it)
                 }
 
+
+
             }
-        }
+            }
+}

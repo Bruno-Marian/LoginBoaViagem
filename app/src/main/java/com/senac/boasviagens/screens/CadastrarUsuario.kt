@@ -12,21 +12,21 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.senac.boasviagens.viewmodels.DadosViewModel
+import com.senac.boasviagens.database.AppDatabase
+import com.senac.boasviagens.viewmodels.UsuarioViewModel
+import com.senac.boasviagens.viewmodels.UsuarioViewModelFatory
 
 @Composable
 fun CadastrarUsuario(
-        onBack: () -> Unit,
-        dadosViewModel: DadosViewModel = viewModel()
+        onBack: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -34,9 +34,15 @@ fun CadastrarUsuario(
 
     ) {
 
-        val loginState = dadosViewModel.uiState.collectAsState()
-        val passState = dadosViewModel.uiState.collectAsState()
-        val emailState = dadosViewModel.uiState.collectAsState()
+        val context = LocalContext.current
+        val db = AppDatabase.getDatabase(context)
+        val usuarioViewModel: UsuarioViewModel = viewModel(
+            factory = UsuarioViewModelFatory(db)
+        )
+
+        val loginState = usuarioViewModel.uiState.collectAsState()
+        val passState = usuarioViewModel.uiState.collectAsState()
+        val emailState = usuarioViewModel.uiState.collectAsState()
 
 
         Row {
@@ -67,8 +73,8 @@ fun CadastrarUsuario(
         ) {
 
             OutlinedTextField(
-                value = loginState.value.login,
-                onValueChange = {dadosViewModel.updateLogin(it)},
+                value = loginState.value.usuario,
+                onValueChange = {usuarioViewModel.updateLogin(it)},
                 modifier = Modifier
                     .padding(start = 55.dp, top = 10.dp)
             )
@@ -92,7 +98,7 @@ fun CadastrarUsuario(
         ) {
             OutlinedTextField(
                 value = passState.value.senha,
-                onValueChange = {dadosViewModel.updateSenha(it)},
+                onValueChange = {usuarioViewModel.updateSenha(it)},
                 modifier = Modifier
                     .padding(start = 55.dp, top = 10.dp)
             )
@@ -115,7 +121,7 @@ fun CadastrarUsuario(
         ) {
             OutlinedTextField(
                 value = emailState.value.email,
-                onValueChange = {dadosViewModel.updateEmail(it)},
+                onValueChange = {usuarioViewModel.updateEmail(it)},
                 modifier = Modifier
                     .padding(start = 55.dp, top = 10.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
@@ -125,7 +131,9 @@ fun CadastrarUsuario(
 
         Row {
             Button(
-                onClick = { onBack() },
+                onClick = {
+                    usuarioViewModel.save()
+                    onBack() },
                 modifier = Modifier
                     .padding(start = 127.dp, top = 25.dp)
 

@@ -1,21 +1,22 @@
 package com.senac.boasviagens.database
 
-import android.app.Application
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import com.senac.boasviagens.dao.UsuarioDao
 import com.senac.boasviagens.dao.ViagemDao
 import com.senac.boasviagens.entities.Converters
 import com.senac.boasviagens.entities.Viagem
+import com.senac.boasviagens.entities.Usuario
 
-@Database(entities = [Viagem::class], version = 1, exportSchema = false)
+@Database(entities = [Viagem::class, Usuario::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract val viagemDao: ViagemDao
+    abstract val usuarioDao: UsuarioDao
 
     companion object {
         @Volatile
@@ -25,7 +26,7 @@ abstract class AppDatabase : RoomDatabase() {
             val instance = Room.databaseBuilder(
                 context,
                 AppDatabase::class.java,
-                "appviagem-db"
+                "appviagem-db-complete"
             )
                 .fallbackToDestructiveMigration()
                 .build()
