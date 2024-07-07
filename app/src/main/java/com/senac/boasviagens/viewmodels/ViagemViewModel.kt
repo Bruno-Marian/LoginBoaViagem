@@ -83,4 +83,15 @@ class ViagemViewModel(val viagemDao: ViagemDao): ViewModel() {
         return deferred.await()
     }
 
+    fun setUiState(viagem: Viagem) {
+        _uiState.value = uiState.value.copy(
+            id = viagem.id,
+            destino = viagem.destino,
+            tipo = viagem.tipo,
+            inicio = viagem.inicio,
+            fim = viagem.fim,
+            orcamento = viagem.orcamento
+        )
+    }
+
 }

@@ -1,5 +1,6 @@
 package com.senac.boasviagens.screens
 
+import android.os.Bundle
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -24,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.os.bundleOf
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -58,13 +61,17 @@ fun Viagens(){
     val listViagem = viagemViewModel.viagemDao.getAll().collectAsState(initial = emptyList())
 
     val navController = rememberNavController()
+    val currentBackStackEntry by navController.currentBackStackEntryFlow.collectAsState(initial = navController.currentBackStackEntry)
+    val showFab = currentBackStackEntry?.destination?.route == "dest"
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                navController.navigate("cadastroViagens")
-            }) {
-                Icon(imageVector = Icons.Default.Add,
-                    contentDescription = null)
+            if (showFab){
+                FloatingActionButton(onClick = {
+                    navController.navigate("cadastroViagens/${-1L}")
+                }) {
+                    Icon(imageVector = Icons.Default.Add,
+                        contentDescription = null)
+                }
             }
         }
     ) { it ->
@@ -74,9 +81,10 @@ fun Viagens(){
                 startDestination = "dest"
             ) {
                 composable("cadastroViagens/{viagemId}",
-                    arguments = listOf(navArgument("viagemId") { type = NavType.LongType })) {
+                    arguments = listOf(navArgument("viagemId") { type = NavType.LongType; defaultValue = -1L })) { backStackEntry ->
+                    val viagemId = backStackEntry.arguments?.getLong("viagemId")
                     CadastrarViagens(
-                        onBack = {navController.navigateUp()}
+                        onBack = {navController.navigateUp()}, viagemId = if (viagemId != -1L) viagemId else null
                     )
                 }
                 composable("dest") {
@@ -87,7 +95,10 @@ fun Viagens(){
                 items(items = listViagem.value){
                     ViagemCard(it, onDelete = {
                         viagemViewModel.delete(it)
-                    })
+                    },
+                        onEdit = {
+                            navController.navigate("cadastroViagens/${it.id}")
+                        })
                 }
             }
         }
@@ -96,7 +107,7 @@ fun Viagens(){
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ViagemCard(v: Viagem, onDelete: () -> Unit){
+fun ViagemCard(v: Viagem, onDelete: () -> Unit, onEdit: () -> Unit){
     val ctx = LocalContext.current
     Card(elevation = CardDefaults.cardElevation(
         defaultElevation = 6.dp
@@ -107,13 +118,7 @@ fun ViagemCard(v: Viagem, onDelete: () -> Unit){
             .fillMaxWidth()
             .combinedClickable(
                 onClick = {
-                    Toast
-                        .makeText(
-                            ctx,
-                            "Destino: ${v.destino}, ${v.inicio} - ${v.fim}",
-                            Toast.LENGTH_LONG
-                        )
-                        .show()
+                    onEdit()
                 },
                 onLongClick = {
                     onDelete()

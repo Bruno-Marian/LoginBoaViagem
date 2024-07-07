@@ -1,5 +1,6 @@
 package com.senac.boasviagens.screens
 
+import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,10 +16,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,12 +28,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.senac.boasviagens.components.MyTopBar
 import com.senac.boasviagens.database.AppDatabase
 import com.senac.boasviagens.entities.TipoViagem
-import com.senac.boasviagens.entities.Viagem
 import com.senac.boasviagens.viewmodels.ViagemViewModel
 import com.senac.boasviagens.viewmodels.ViagemViewModelFatory
 import java.text.SimpleDateFormat
@@ -41,12 +39,13 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CadastrarViagens(onBack: ()->Unit, savedStateHandle: SavedStateHandle) {
+fun CadastrarViagens(onBack: ()->Unit, viagemId: Long?) {
     Scaffold(
         topBar = {
-            MyTopBar()
+            MyTopBar { onBack() }
         }
     ) { it ->
         val context = LocalContext.current
@@ -55,8 +54,12 @@ fun CadastrarViagens(onBack: ()->Unit, savedStateHandle: SavedStateHandle) {
             factory = ViagemViewModelFatory(db)
         )
 
-        val userId: String = checkNotNull(savedStateHandle["userId"])
-        
+        LaunchedEffect(viagemId) {
+            if (viagemId != null){
+                val viagem =  viagemViewModel.findById(viagemId)
+                viagem?.let { viagemViewModel.setUiState(it) }
+            }
+        }
 
         val state = viagemViewModel.uiState.collectAsState()
 

@@ -14,11 +14,10 @@ import androidx.compose.runtime.Composable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyTopBar(){
+fun MyTopBar(onBack: ()->Unit){
     TopAppBar(
-
         navigationIcon = {
-            IconButton(onClick = {  }) {
+            IconButton(onClick = { onBack() }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = null
