@@ -107,7 +107,7 @@ fun Login(onCadastrarUsuario: ()->Unit, onLogin: (id: String) ->Unit){
 
             )
 
-            val visible = remember { mutableStateOf(true) }
+            val visible = remember { mutableStateOf(false) }
 
             OutlinedTextField(
                 value = passState.value.senha,

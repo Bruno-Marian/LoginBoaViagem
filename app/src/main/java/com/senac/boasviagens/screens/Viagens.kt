@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -24,8 +25,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +47,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.senac.boasviagens.R
+import com.senac.boasviagens.components.CustomDialog
 import com.senac.boasviagens.database.AppDatabase
 import com.senac.boasviagens.entities.Viagem
 import com.senac.boasviagens.entities.TipoViagem
@@ -59,7 +64,6 @@ fun Viagens(){
         factory = ViagemViewModelFatory(db)
     )
     val listViagem = viagemViewModel.viagemDao.getAll().collectAsState(initial = emptyList())
-
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryFlow.collectAsState(initial = navController.currentBackStackEntry)
     val showFab = currentBackStackEntry?.destination?.route == "dest"
@@ -109,6 +113,7 @@ fun Viagens(){
 @Composable
 fun ViagemCard(v: Viagem, onDelete: () -> Unit, onEdit: () -> Unit){
     val ctx = LocalContext.current
+    val dialog = remember { mutableStateOf(false) }
     Card(elevation = CardDefaults.cardElevation(
         defaultElevation = 6.dp
     ),
@@ -121,10 +126,25 @@ fun ViagemCard(v: Viagem, onDelete: () -> Unit, onEdit: () -> Unit){
                     onEdit()
                 },
                 onLongClick = {
-                    onDelete()
+                    dialog.value = true
                 }
             )
     ) {
+        when {
+            dialog.value -> {
+                CustomDialog(
+                    onDismissRequest = { dialog.value = false },
+                    onConfirmation = {
+                        dialog.value = false
+                        onDelete()
+                    },
+                    dialogTitle = "Confirmação de exclusão",
+                    dialogText = "Tem certeza que deseja excluir a viagem?",
+                    icon = Icons.Default.Info
+                )
+            }
+        }
+
         Row(modifier = Modifier.padding(4.dp)) {
             if (v.tipo == TipoViagem.Negocio){
                 Image(
