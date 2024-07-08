@@ -61,6 +61,12 @@ class ViagemViewModel(val viagemDao: ViagemDao): ViewModel() {
         }
     }
 
+    fun updateUsuario(id: Long){
+        _uiState.update {
+            it.copy(usuario = id)
+        }
+    }
+
     fun save(){
         viewModelScope.launch {
             val id = viagemDao.upsert(uiState.value)

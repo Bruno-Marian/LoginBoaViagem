@@ -57,13 +57,14 @@ fun Dest(){
 
 }
 @Composable
-fun Viagens(){
+fun Viagens(id: String){
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
     val viagemViewModel: ViagemViewModel = viewModel(
         factory = ViagemViewModelFatory(db)
     )
-    val listViagem = viagemViewModel.viagemDao.getAll().collectAsState(initial = emptyList())
+    val idUsuario = id.toLong()
+    val listViagem = viagemViewModel.viagemDao.getByUser(idUsuario).collectAsState(initial = emptyList())
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryFlow.collectAsState(initial = navController.currentBackStackEntry)
     val showFab = currentBackStackEntry?.destination?.route == "dest"
@@ -88,7 +89,7 @@ fun Viagens(){
                     arguments = listOf(navArgument("viagemId") { type = NavType.LongType; defaultValue = -1L })) { backStackEntry ->
                     val viagemId = backStackEntry.arguments?.getLong("viagemId")
                     CadastrarViagens(
-                        onBack = {navController.navigateUp()}, viagemId = if (viagemId != -1L) viagemId else null
+                        onBack = {navController.navigateUp()}, viagemId = if (viagemId != -1L) viagemId else null, idUsuario
                     )
                 }
                 composable("dest") {

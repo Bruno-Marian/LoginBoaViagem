@@ -26,6 +26,9 @@ interface ViagemDao {
     @Query("SELECT * FROM Viagem ORDER BY id DESC")
     fun getAll() : Flow<List<Viagem>>
 
+    @Query("SELECT * FROM Viagem WHERE usuario = :id ORDER BY id DESC")
+    fun getByUser(id: Long) : Flow<List<Viagem>>
+
     @Query("SELECT * FROM Viagem V WHERE V.id = :id")
     suspend fun findById(id: Long) : Viagem?
 }

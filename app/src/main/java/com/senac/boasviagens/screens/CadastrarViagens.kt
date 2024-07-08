@@ -49,7 +49,7 @@ import java.util.TimeZone
 @SuppressLint("CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CadastrarViagens(onBack: ()->Unit, viagemId: Long?) {
+fun CadastrarViagens(onBack: ()->Unit, viagemId: Long?, idUsuario: Long) {
     val snackbarHostState = remember {
         SnackbarHostState()
     }
@@ -71,6 +71,7 @@ fun CadastrarViagens(onBack: ()->Unit, viagemId: Long?) {
             factory = ViagemViewModelFatory(db)
         )
 
+        viagemViewModel.updateUsuario(idUsuario)
         LaunchedEffect(viagemId) {
             if (viagemId != null){
                 val viagem =  viagemViewModel.findById(viagemId)

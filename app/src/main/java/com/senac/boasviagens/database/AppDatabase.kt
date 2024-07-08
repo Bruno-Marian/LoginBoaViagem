@@ -11,7 +11,7 @@ import com.senac.boasviagens.entities.Converters
 import com.senac.boasviagens.entities.Viagem
 import com.senac.boasviagens.entities.Usuario
 
-@Database(entities = [Viagem::class, Usuario::class], version = 2, exportSchema = false)
+@Database(entities = [Viagem::class, Usuario::class], version = 3, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
@@ -26,7 +26,7 @@ abstract class AppDatabase : RoomDatabase() {
             val instance = Room.databaseBuilder(
                 context,
                 AppDatabase::class.java,
-                "appviagem-db-complete"
+                "appviagem-db-last"
             )
                 .fallbackToDestructiveMigration()
                 .build()

@@ -136,7 +136,7 @@ fun Menu(id: String){
                     Home(id)
                 }
                 composable("viagem"){
-                    Viagens()
+                    Viagens(id)
                 }
 
                 composable("sobre"){

@@ -17,7 +17,8 @@ data class Viagem(
  val tipo: TipoViagem = TipoViagem.Lazer,
  val inicio: Date? = null,
  val fim: Date? = null,
- val orcamento: Float? = null
+ val orcamento: Float? = null,
+ val usuario: Long = 0
 ) {
 }
 
